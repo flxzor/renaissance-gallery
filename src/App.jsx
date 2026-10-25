@@ -1,122 +1,119 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import Header from "./components/Header";
+import GalleryStats from "./components/GalleryStats";
+import ArtworkList from "./components/ArtworkList";
+import ArtworkForm from "./components/ArtworkForm";
+import { initialArtworks } from "./data/artworks";
+
+const createId = () =>
+  `art-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [artworks, setArtworks] = useState(initialArtworks);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(""), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  const handleAddArtwork = (data) => {
+    const newArtwork = {
+      id: createId(),
+      title: data.title.trim(),
+      artist: data.artist.trim(),
+      year: data.year.trim(),
+      period: data.period.trim(),
+      description: data.description.trim(),
+      image: data.image.trim(),
+    };
+
+    setArtworks((current) => [newArtwork, ...current]);
+    setNotice(`“${newArtwork.title}” berhasil ditambahkan ke koleksi.`);
+    setIsFormOpen(false);
+  };
+
+  const handleDeleteArtwork = (id) => {
+    setArtworks((current) => current.filter((artwork) => artwork.id !== id));
+  };
+
+  const handleRestore = () => setArtworks(initialArtworks);
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      <a className="skip-link" href="#koleksi">
+        Lewati ke koleksi
+      </a>
 
-      <div className="ticks"></div>
+      <Header onOpenForm={() => setIsFormOpen(true)} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
+      <main>
+        <section className="hero">
+          <div className="container hero__inner">
+            <p className="kicker">Katalog Digital · Abad XV–XVI</p>
+            <h1>
+              Renaissance <em>Gallery</em>
+            </h1>
+            <p className="hero__lead">
+              Jelajahi lukisan-lukisan agung dari Florence, Roma, dan Milan,
+              lalu perluas koleksi ini dengan karya pilihanmu sendiri.
+            </p>
+            <div className="hero__actions">
+              <a className="btn btn--primary" href="#koleksi">
+                Jelajahi Koleksi
               </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+              <button
+                type="button"
+                className="btn btn--outline"
+                onClick={() => setIsFormOpen(true)}
+              >
+                Tambah Koleksi
+              </button>
+            </div>
+          </div>
+        </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+        <section id="statistik" className="section container">
+          <GalleryStats artworks={artworks} />
+        </section>
+
+        {isFormOpen && (
+          <section id="tambah" className="section container">
+            <ArtworkForm
+              onAddArtwork={handleAddArtwork}
+              onClose={() => setIsFormOpen(false)}
+            />
+          </section>
+        )}
+
+        <section id="koleksi" className="section container">
+          <div className="section-head">
+            <p className="kicker">Koleksi</p>
+            <h2>Karya Seni</h2>
+          </div>
+
+          <div className="notice-slot" role="status">
+            {notice && <p className="notice">{notice}</p>}
+          </div>
+
+          <ArtworkList
+            artworks={artworks}
+            onDeleteArtwork={handleDeleteArtwork}
+            onRestore={handleRestore}
+          />
+        </section>
+      </main>
+
+      <footer className="site-footer">
+        <div className="container">
+          <p>Renaissance Gallery · Tugas BAB 6 React Dasar</p>
+          <p>Gambar contoh bersumber dari Wikimedia Commons.</p>
+        </div>
+      </footer>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
