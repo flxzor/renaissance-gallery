@@ -4,9 +4,10 @@ const emptyForm = {
   title: "",
   artist: "",
   year: "",
-  period: "",
+  period: "Renaissance Tinggi",
   description: "",
   image: "",
+  isMasterpiece: false,
 };
 
 const PERIOD_OPTIONS = [
@@ -18,15 +19,25 @@ const PERIOD_OPTIONS = [
 
 const validate = (values) => {
   const errors = {};
-  if (!values.title.trim()) errors.title = "Judul karya wajib diisi.";
-  if (!values.artist.trim()) errors.artist = "Nama seniman wajib diisi.";
-  if (!values.year.trim())
-    errors.year = "Tahun atau masa pembuatan wajib diisi.";
-  if (!values.period.trim()) errors.period = "Periode seni wajib diisi.";
-  if (values.description.trim().length < 10)
+  if (!values.title.trim() || values.title.trim().length < 3) {
+    errors.title = "Judul karya minimal 3 karakter.";
+  }
+  if (!values.artist.trim() || values.artist.trim().length < 2) {
+    errors.artist = "Nama seniman minimal 2 karakter.";
+  }
+  const yearNum = Number(values.year);
+  if (!values.year || isNaN(yearNum) || yearNum < 1200 || yearNum > 2100) {
+    errors.year = "Tahun harus berupa angka antara 1200 dan 2100.";
+  }
+  if (!PERIOD_OPTIONS.includes(values.period)) {
+    errors.period = "Pilih salah satu periode seni yang valid.";
+  }
+  if (values.description.trim().length < 10) {
     errors.description = "Deskripsi wajib diisi (minimal 10 karakter).";
-  if (values.image.trim() && !/^https?:\/\/\S+$/i.test(values.image.trim()))
+  }
+  if (values.image.trim() && !/^https?:\/\/\S+$/i.test(values.image.trim())) {
     errors.image = "URL gambar harus diawali http:// atau https://.";
+  }
   return errors;
 };
 
@@ -44,8 +55,20 @@ function Field({ id, label, error, full = false, children }) {
   );
 }
 
-function ArtworkForm({ onAddArtwork, onClose }) {
-  const [values, setValues] = useState(emptyForm);
+function ArtworkForm({ initialData, onSubmit, onClose, serverError }) {
+  const [values, setValues] = useState(
+    initialData
+      ? {
+          title: initialData.title || "",
+          artist: initialData.artist || "",
+          year: initialData.year ? String(initialData.year) : "",
+          period: initialData.period || "Renaissance Tinggi",
+          description: initialData.description || "",
+          image: initialData.image || "",
+          isMasterpiece: Boolean(initialData.isMasterpiece),
+        }
+      : emptyForm,
+  );
   const [errors, setErrors] = useState({});
   const panelRef = useRef(null);
   const titleRef = useRef(null);
@@ -56,8 +79,11 @@ function ArtworkForm({ onAddArtwork, onClose }) {
   }, []);
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
-    setValues((current) => ({ ...current, [name]: value }));
+    const { name, value, type, checked } = event.target;
+    setValues((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
     if (errors[name]) {
       setErrors((current) => ({ ...current, [name]: undefined }));
     }
@@ -68,9 +94,7 @@ function ArtworkForm({ onAddArtwork, onClose }) {
     const foundErrors = validate(values);
     setErrors(foundErrors);
     if (Object.keys(foundErrors).length > 0) return;
-    onAddArtwork(values);
-    setValues(emptyForm);
-    setErrors({});
+    onSubmit(values, initialData?.id);
   };
 
   const aria = (name) => ({
@@ -82,12 +106,15 @@ function ArtworkForm({ onAddArtwork, onClose }) {
   return (
     <div className="form-panel" ref={panelRef}>
       <div className="section-head">
-        <p className="kicker">Koleksi Baru</p>
-        <h2>Tambah Karya Baru</h2>
+        <p className="kicker">
+          {initialData ? "Sunting Koleksi" : "Koleksi Baru"}
+        </p>
+        <h2>{initialData ? "Ubah Karya Seni" : "Tambah Karya Baru"}</h2>
       </div>
       <p className="form-panel__intro">
-        Isi data lukisan yang ingin kamu masukkan. Karya akan langsung muncul di
-        galeri.
+        {initialData
+          ? "Perbarui rincian karya seni berikut."
+          : "Isi data lukisan yang ingin kamu masukkan. Data akan langsung tersimpan di backend NestJS."}
       </p>
 
       <form onSubmit={handleSubmit} noValidate>
@@ -121,14 +148,14 @@ function ArtworkForm({ onAddArtwork, onClose }) {
             />
           </Field>
 
-          <Field id="year" label="Tahun / Masa" error={errors.year}>
+          <Field id="year" label="Tahun Pembuatan" error={errors.year}>
             <input
               id="year"
               name="year"
-              type="text"
+              type="number"
               value={values.year}
               onChange={handleChange}
-              placeholder="mis. c. 1472–1475"
+              placeholder="mis. 1503"
               autoComplete="off"
               required
               {...aria("year")}
@@ -136,23 +163,20 @@ function ArtworkForm({ onAddArtwork, onClose }) {
           </Field>
 
           <Field id="period" label="Periode Seni" error={errors.period}>
-            <input
+            <select
               id="period"
               name="period"
-              type="text"
-              list="period-options"
               value={values.period}
               onChange={handleChange}
-              placeholder="Pilih atau ketik periode"
-              autoComplete="off"
               required
               {...aria("period")}
-            />
-            <datalist id="period-options">
+            >
               {PERIOD_OPTIONS.map((option) => (
-                <option key={option} value={option} />
+                <option key={option} value={option}>
+                  {option}
+                </option>
               ))}
-            </datalist>
+            </select>
           </Field>
 
           <Field
@@ -185,12 +209,30 @@ function ArtworkForm({ onAddArtwork, onClose }) {
               rows="4"
               value={values.description}
               onChange={handleChange}
-              placeholder="Ceritakan secara singkat subjek atau arti penting karya ini."
+              placeholder="Ceritakan secara singkat subjek atau arti penting karya ini (minimal 10 karakter)."
               required
               {...aria("description")}
             />
           </Field>
+
+          <div className="field field--full">
+            <label style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                name="isMasterpiece"
+                checked={values.isMasterpiece}
+                onChange={handleChange}
+              />
+              Tandai sebagai Karya Utama (Masterpiece)
+            </label>
+          </div>
         </div>
+
+        {serverError && (
+          <p className="form-alert" role="alert">
+            {serverError}
+          </p>
+        )}
 
         {hasErrors && (
           <p className="form-alert" role="alert">
@@ -200,7 +242,7 @@ function ArtworkForm({ onAddArtwork, onClose }) {
 
         <div className="form-actions">
           <button type="submit" className="btn btn--primary">
-            Tambah Karya
+            {initialData ? "Simpan Perubahan" : "Tambah Karya"}
           </button>
           <button type="button" className="btn btn--outline" onClick={onClose}>
             Batal
