@@ -1,13 +1,18 @@
 import ArtworkCard from "./ArtworkCard";
 
-function ArtworkList({ artworks, onDeleteArtwork, onRestore }) {
+function ArtworkList({ artworks, onDeleteArtwork, onEditArtwork, loading }) {
+  if (loading) {
+    return (
+      <div className="empty-state">
+        <p className="empty-state__message">Memuat karya seni dari server...</p>
+      </div>
+    );
+  }
+
   if (artworks.length === 0) {
     return (
       <div className="empty-state">
         <p className="empty-state__message">Belum ada data karya seni</p>
-        <button type="button" className="btn btn--outline" onClick={onRestore}>
-          Pulihkan Koleksi Contoh
-        </button>
       </div>
     );
   }
@@ -19,6 +24,7 @@ function ArtworkList({ artworks, onDeleteArtwork, onRestore }) {
           key={artwork.id}
           artwork={artwork}
           onDelete={onDeleteArtwork}
+          onEdit={onEditArtwork}
         />
       ))}
     </div>

@@ -1,0 +1,81 @@
+@baseUrl = http://localhost:3000
+
+GET {{baseUrl}}/artworks
+
+###
+
+GET {{baseUrl}}/artworks/art-001
+
+###
+
+GET {{baseUrl}}/artworks/art-999
+
+###
+
+POST {{baseUrl}}/artworks
+Content-Type: application/json
+
+{
+  "title": "The Last Judgment",
+  "artist": "Michelangelo",
+  "year": 1541,
+  "period": "Renaissance Tinggi",
+  "description": "Fresko mahakarya di dinding altar Kapel Sistina yang menggambarkan kedatangan kedua Kristus.",
+  "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Michelangelo_-_The_Last_Judgment.jpg/800px-Michelangelo_-_The_Last_Judgment.jpg",
+  "isMasterpiece": true
+}
+
+###
+
+POST {{baseUrl}}/artworks
+Content-Type: application/json
+
+{
+  "title": "The Last Judgment",
+  "artist": "Michelangelo",
+  "year": 1541,
+  "period": "Renaissance Tinggi",
+  "description": "Duplikat karya seni untuk memicu ConflictException.",
+  "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Michelangelo_-_The_Last_Judgment.jpg/800px-Michelangelo_-_The_Last_Judgment.jpg",
+  "isMasterpiece": true
+}
+
+###
+
+POST {{baseUrl}}/artworks
+Content-Type: application/json
+
+{
+  "title": "A",
+  "artist": "B",
+  "year": 999,
+  "period": "Modern Art",
+  "description": "Pendek"
+}
+
+###
+
+PATCH {{baseUrl}}/artworks/art-001
+Content-Type: application/json
+
+{
+  "year": 1506,
+  "isMasterpiece": true
+}
+
+###
+
+PATCH {{baseUrl}}/artworks/art-999
+Content-Type: application/json
+
+{
+  "year": 1506
+}
+
+###
+
+DELETE {{baseUrl}}/artworks/art-002
+
+###
+
+DELETE {{baseUrl}}/artworks/art-999
